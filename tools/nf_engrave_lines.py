@@ -30,9 +30,9 @@
 """
 # change this if you want to use another font
 #fontfile = "/usr/share/qcad/fonts/romanc.cxf"
-fontfile = "/home/nfrench/bin/F-Engrave-1.54_src/fonts/hershey/normal.cxf"
+fontfile = "fonts/normal.cxf"
 
-from Tkinter import *
+#from Tkinter import *
 from math import *
 import os
 import re
@@ -40,22 +40,6 @@ import sys
 import string
 import getopt
 
-String =   ""
-SafeZ =    2
-XStart =   0
-XLineOffset =   0
-XIndentList = ""
-YStart = 0
-YLineOffset = 0
-Depth =    0.1
-XScale =   1
-YScale =   1
-CSpaceP =  25
-WSpaceP=   100
-Angle =    0
-Mirror = 0
-Flip = 0
-Velocity = 50 # mm/minute
 Preamble = "G17 G21 G40 G90 G64 P0.003 F%f"
 Postamble = "M2"
 
@@ -228,29 +212,7 @@ def Rotn(x,y,xscale,yscale,angle):
 
 #=======================================================================
 
-def code(arg, visit, last):
-
-    global SafeZ
-    global XStart
-    global XLineOffset
-    global XIndentList
-    global YStart
-    global YLineOffset
-    global Depth
-    global XScale
-    global YScale
-    global CSpaceP
-    global WSpaceP
-    global Angle
-    global Mirror
-    global Flip
-    global Velocity
-    global Preamble
-    global Postamble
-    global stringlist
-
-    String = arg
-
+def code(String, visit, last, options):
     str1 = ""
     #erase old gcode as needed
     gcode = []
@@ -266,13 +228,13 @@ def code(arg, visit, last):
         gcode.append('( Engraving: "%s" )' %(String) )
         gcode.append('( Line %d )' %(visit))
 
-        str1 = '#1002 = %.4f  ( X Start )' %(XStart)        
-        if XLineOffset :
-            if XIndentList.find(str(visit)) != -1 :
-                str1 = '#1002 = %.4f  ( X Start )' %(XStart + XLineOffset)
+        str1 = '#1002 = %.4f  ( X Start )' %(options.xstart)        
+        if options.xlineoffset :
+            if options.xindentlist.find(str(visit)) != -1 :
+                str1 = '#1002 = %.4f  ( X Start )' %(options.xstart + options.xlineoffset)
             
         gcode.append(str1)
-        gcode.append('#1003 = %.4f  ( Y Start )' %(YStart - (YLineOffset * visit)))
+        gcode.append('#1003 = %.4f  ( Y Start )' %(options.ystart - (options.ylineoffset * visit)))
         gcode.append("(===================================================================)")
         
     else:
@@ -302,19 +264,19 @@ def code(arg, visit, last):
         gcode.append("o9000 endsub")
         gcode.append("(===================================================================)")
     
-        gcode.append("#1000 = %.4f" %(SafeZ))
-        gcode.append('#1001 = %.4f  ( Engraving Depth Z )' %(Depth))
+        gcode.append("#1000 = %.4f" %(options.safe_z))
+        gcode.append('#1001 = %.4f  ( Engraving depth Z )' %(options.engrave_z))
         
-        str1 = '#1002 = %.4f  ( X Start )' %(XStart)        
-        if XLineOffset :
-            if XIndentList.find(str(visit)) != -1 :
-                str1 = '#1002 = %.4f  ( X Start )' %(XStart + XLineOffset)
+        str1 = '#1002 = %.4f  ( X Start )' %(options.xstart)        
+        if options.xlineoffset :
+            if options.xindentlist.find(str(visit)) != -1 :
+                str1 = '#1002 = %.4f  ( X Start )' %(options.xstart + options.xlineoffset)
         gcode.append(str1)
-        gcode.append('#1003 = %.4f  ( Y Start )' %(YStart))
-        gcode.append('#1004 = %.4f  ( X Scale )' %(XScale))
-        gcode.append('#1005 = %.4f  ( Y Scale )' %(YScale))
-        gcode.append('#1006 = %.4f  ( Angle )' %(Angle))
-        gcode.append(Preamble % Velocity)
+        gcode.append('#1003 = %.4f  ( Y Start )' %(options.ystart))
+        gcode.append('#1004 = %.4f  ( X Scale )' %(options.xscale))
+        gcode.append('#1005 = %.4f  ( Y Scale )' %(options.yscale))
+        gcode.append('#1006 = %.4f  ( options.angle )' %(options.angle))
+        gcode.append(options.preamble % options.feedrate)
         
     gcode.append( 'G0 Z#1000')
 
@@ -322,14 +284,14 @@ def code(arg, visit, last):
     file.close()
 
     font_line_height = max(font[key].get_ymax() for key in font)
-    font_word_space =  max(font[key].get_xmax() for key in font) * (WSpaceP/100.0)
-    font_char_space = font_word_space * (CSpaceP /100.0)
+    font_word_space =  max(font[key].get_xmax() for key in font) * (options.wspacep/100.0)
+    font_char_space = font_word_space * (options.cspacep /100.0)
 
     xoffset = 0                 # distance along raw string in font units
 
     # calc a plot scale so we can show about first 15 chars of string
     # in the preview window
-    PlotScale = 15 * font['A'].get_xmax() * XScale / 150
+    PlotScale = 15 * font['A'].get_xmax() * options.xscale / 150
 
     for char in String:
         if char == ' ':
@@ -347,9 +309,9 @@ def code(arg, visit, last):
 
                 x1 = stroke.xstart + xoffset
                 y1 = stroke.ystart
-                if Mirror == 1:
+                if options.mirror == 1:
                     x1 = -x1
-                if Flip == 1:
+                if options.flip == 1:
                     y1 = -y1
 
                 # check and see if we need to move to a new discontinuous start point
@@ -362,9 +324,9 @@ def code(arg, visit, last):
 
                 x2 = stroke.xend + xoffset
                 y2 = stroke.yend
-                if Mirror == 1:
+                if options.mirror == 1:
                     x2 = -x2
-                if Flip == 1:
+                if options.flip == 1:
                     y2 = -y2
                 gcode.append('o9000 call [1] [%.4f] [%.4f]' %(x2,y2))
                 oldx, oldy = stroke.xend, stroke.yend
@@ -382,7 +344,7 @@ def code(arg, visit, last):
 
     # finish up with icing
     if last:
-        gcode.append(Postamble)
+        gcode.append(options.postamble)
   
     for line in gcode:
             sys.stdout.write(line+'\n')
@@ -409,11 +371,11 @@ def help_message():
        -D   Z depth for engraving               Defaults to 0.1mm
        -C   Charactor Space %                   Defaults to 25%
        -W   Word Space %                        Defaults to 100%
-       -M   Mirror                              Defaults to 0 (No)
-       -F   Flip                                Defaults to 0 (No)
-       -V   Velocity                            Defaults to 50 (mm/minute)
-       -P   Preamble g code                     Defaults to "G17 G21 G40 G90 G64 P0.003 F50"
-       -p   Postamble g code                    Defaults to "M2"
+       -M   options.mirror                              Defaults to 0 (No)
+       -F   options.flip                                Defaults to 0 (No)
+       -V   options.feedrate                            Defaults to 50 (mm/minute)
+       -P   options.preamble g code                     Defaults to "G17 G21 G40 G90 G64 P0.003 F50"
+       -p   options.postamble g code                    Defaults to "M2"
        -0   Line0 string follow this
        -1   Line1 string follow this
        -2   Line2 string follow this        
@@ -432,277 +394,45 @@ def help_message():
 #===============================================================================================================
 
 def main():
+    import optparse
 
-    debug = 0
-    # need to declare the globals because we want to write to them
-    # otherwise python will create a local of the same name and
-    # not change the global - stupid python
-    global SafeZ
-    global XStart
-    global XLineOffset
-    global XIndentList
-    global YStart
-    global YLineOffset
-    global Depth
-    global XScale
-    global YScale
-    global CSpaceP
-    global WSpaceP
-    global Angle
-    global Mirror
-    global Flip
-    global Velocity
-    global Preamble
-    global Postamble
-    global stringlist
-    
-    try:
-        options, xarguments = getopt.getopt(sys.argv[1:], 'hd:X:x:i:Y:y:S:s:Z:D:C:W:M:F:P:p:L:0:1:2:3:4:5:6:7:8:9:V:')
-    except getopt.error:
-        print 'Error: You tried to use an unknown option. Try `engrave-lines.py -h\' for more information.'
-        sys.exit(0)
-        
-    if len(sys.argv[1:]) == 0:
-        help_message()
-        sys.exit(0)    
-    
-    for a in options[:]:
-        if a[0] == '-h':
-            help_message()
-            sys.exit(0)
-#  hidden debug option for testing            
-    for a in options[:]:
-        if a[0] == '-d' and a[1] != '':
-            debug = int(a[1])
-            print'debug set to %d' %(debug)
-            options.remove(a)
-            break
+    example = "Example:  %s --xstart=7.5 --xlineoffset=5  --ystart=12.75 --ylineoffset=5.25 --xscale=0.4 --yscale=0.5 --safez=2 --depth=0.1 --xindentlist='1 2 3' 'Line0' 'Line1' 'Line2' 'Line3' > gcode.ngc" % sys.argv[0]
 
-    for a in options[:]:
-        if a[0] == '-X' and a[1] != '':
-            XStart = float(a[1])
-            if debug:            
-                print'X = %.4f' %(XStart)
-            options.remove(a)
-            break
+    parser = optparse.OptionParser(epilog=example)
 
-    for a in options[:]:
-        if a[0] == '-x' and a[1] != '':
-            XLineOffset = float(a[1])
-            if debug:
-                print'x = %.4f' %(XLineOffset)
-            options.remove(a)
-            break
+    parser.add_option("--metric", dest="metric", help="Use metric units.", default=True)
+    parser.add_option("--font", dest="font", help="Font file (CXF) to use.")
+    parser.add_option("--xstart", dest="xstart", type='float', help="Start X Value.", default=0.0)
+    parser.add_option("--xscale", dest="xscale", type='float', help="X scale.", default=1.0)
+    parser.add_option("--xlineoffset", dest="xlineoffset", type='float', help="X offset between lines.", default=0.0)
+    parser.add_option("--xindentlist", dest="xindentlist", help="X offset between lines.", default='')
+    parser.add_option("--ystart", dest="ystart", type='float', help="Start Y Value.", default=0.0)
+    parser.add_option("--yscale", dest="yscale", type='float', help="Y scale.", default=1.0)
+    parser.add_option("--ylineoffset", dest="ylineoffset", type='float', help="Y offset between lines.", default=0.0)
+    parser.add_option("--safez", dest="safe_z", type='float', help="Safe depth.", default=2)
+    parser.add_option("-d", "--depth", dest="engrave_z", type='float', help="Engraving depth.", default=0.1)
+    parser.add_option("--cspacep", dest="cspacep", type='float', help="Character space percent.", default=25)
+    parser.add_option("--wspacep", dest="wspacep", type='float', help="Word space percent.", default=100)
+    parser.add_option("--preamble", dest="preamble", help="Gcode preamble.", default=Preamble)
+    parser.add_option("--postamble", dest="postamble", help="Gcode postamble.", default=Postamble)
+    parser.add_option("--angle", dest="angle", type='float', help="Orientation about the Z axis.", default=0)
+    parser.add_option("--mirror", dest="mirror", default=False, help="options.mirror about the Y axis.")
+    parser.add_option("--flip", dest="flip", default=False, help="options.mirror about the X axis.")
+    parser.add_option("--debug", dest="debug", default=False, help="Enable debug output.")
+    parser.add_option("-f", "--feedrate", dest="feedrate", type='float', help="Cutting feedrate in units per minute.", default=50)
 
-    for a in options[:]:
-        if a[0] == '-i' and a[1] != '':
-            XIndentList = a[1]
-            if debug:
-                print'i = %s' %(a[1])
-            options.remove(a)
-            break
-            
-    for a in options[:]:
-        if a[0] == '-Y' and a[1] != '':
-            YStart = float(a[1])
-            if debug:
-                print'Y = %.4f' %(YStart)
-            options.remove(a)
-            break
+    (options, stringlist) = parser.parse_args()
 
-    for a in options[:]:
-        if a[0] == '-y' and a[1] != '':
-            YLineOffset = float(a[1])
-            if debug:
-                print'y = %.4f' %(YLineOffset)
-            options.remove(a)
-            break
-            
-    for a in options[:]:
-        if a[0] == '-S' and a[1] != '':
-            XScale = float(a[1])
-            if debug:
-                print'S = %.4f' %(XScale)
-            options.remove(a)
-            break            
-  
-    for a in options[:]:
-        if a[0] == '-s' and a[1] != '':
-            YScale = float(a[1])
-            if debug:
-                print's = %.4f' %(YScale)
-            options.remove(a)
-            break              
-  
-    for a in options[:]:
-        if a[0] == '-Z' and a[1] != '':
-            SafeZ = float(a[1])
-            if debug:
-                print'Z = %.4f' %(SafeZ)
-            options.remove(a)
-            break  
-  
-    for a in options[:]:
-        if a[0] == '-D' and a[1] != '':
-            Depth = float(a[1])
-            if debug:
-                print'D = %.4f' %(Depth)
-            options.remove(a)
-            break    
-  
-    for a in options[:]:
-        if a[0] == '-C' and a[1] != '':
-            CSpaceP = float(a[1])
-            if debug:
-                print'C = %.4f' %(CSpaceP)
-            options.remove(a)
-            break      
+    if not options.font:
+        print 'Must specify a font.'
 
-    for a in options[:]:
-        if a[0] == '-W' and a[1] != '':
-            WSpaceP = float(a[1])    
-            if debug:
-                print'W = %.4f' %(WSpaceP)
-            options.remove(a)
-            break      
-
-    for a in options[:]:
-        if a[0] == '-A' and a[1] != '':
-            Angle = float(a[1])
-            if debug:
-                print'A = %.4f' %(Angle)
-            options.remove(a)
-            break  
-            
-            
-    for a in options[:]:
-        if a[0] == '-M' and a[1] != '':
-            Mirror = float(a[1])
-            if debug:
-                print'M = %.4f' %(Mirror)
-            options.remove(a)
-            break  
-              
-    for a in options[:]:
-        if a[0] == '-F' and a[1] != '':
-            Flip = float(a[1])
-            if debug:
-                print'F = %.4f' %(Flip)
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-P' and a[1] != '':
-            Preamble = a[1]
-            if debug:
-                print'P = %s' %(a[1])
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-p' and a[1] != '':            
-            Postamble = a[1]
-            if debug:
-                print'p = %s' %(a[1])
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-0' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'0 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-1' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'1 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-2' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'2 = %s' %(a[1])
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-3' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'3 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-4' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'4 = %s' %(a[1])
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-5' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'5 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-6' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'6 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-7' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'7 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-8' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'8 = %s' %(a[1])
-            options.remove(a)
-            break  
-            
-    for a in options[:]:
-        if a[0] == '-9' and a[1] != '':
-            stringlist.append(a[1])
-            if debug:
-                print'9 = %s' %(a[1])
-            options.remove(a)
-            break  
-
-    for a in options[:]:
-        if a[0] == '-V' and a[1] != '':
-            Velocity = float(a[1])
-            if debug:
-                print'V = %.4f' %(Velocity)
-            options.remove(a)
-            break  
-
-            
     for index, item in enumerate(stringlist):
-        code(item,index, index == (len(stringlist) - 1) )
+        code(item,index, index == (len(stringlist) - 1), options)
    
             
 #===============================================================================================
             
 if __name__ == "__main__":
-	    main()
+    main()
 
 #===============================================================================================END
