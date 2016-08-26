@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 """
+Based on:
+
     engrave-lines.py G-Code Engraving Generator for command-line usage
     (C) ArcEye <2012>  <arceye at mgware dot co dot uk>
     syntax  ---   see helpfile below
@@ -28,9 +30,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
     Rev v2 21.06.2012 ArcEye
 """
-# change this if you want to use another font
-#fontfile = "/usr/share/qcad/fonts/romanc.cxf"
-fontfile = "fonts/normal.cxf"
 
 #from Tkinter import *
 from math import *
@@ -107,7 +106,7 @@ def parse(file):
             font[key].stroke_list = stroke_list
             font[key].xmax = xmax
             if (num_cmds != cmds_read):
-                print "(warning: discrepancy in number of commands %s, line %s, %s != %s )" % (fontfile, line_num, num_cmds, cmds_read)
+                print "(warning: discrepancy in number of commands %s, line %s, %s != %s )" % (file.name, line_num, num_cmds, cmds_read)
 
         new_cmd = re.match('^\[(.*)\]\s(\d+)', text)
         if new_cmd: #new character
@@ -217,7 +216,7 @@ def code(String, visit, last, options):
     #erase old gcode as needed
     gcode = []
     
-    file = open(fontfile)
+    file = open(options.fontfile)
   
     oldx = oldy = -99990.0      
     
@@ -243,7 +242,7 @@ def code(String, visit, last, options):
         gcode.append('( args:  %s )' % ' '.join(sys.argv)) 
         gcode.append('( by ArcEye 2012, based on work by <Lawrence Glaister>)')
         gcode.append('( Engraving: "%s")' %(String) )
-        gcode.append('( Fontfile: %s )' %(fontfile))
+        gcode.append('( Fontfile: %s )' %(options.fontfile))
         # write out subroutine for rotation logic just once at head
         gcode.append("(===================================================================)")
         gcode.append("(Subroutine to handle x,y rotation about 0,0)")
@@ -396,12 +395,17 @@ def help_message():
 def main():
     import optparse
 
-    example = "Example:  %s --xstart=7.5 --xlineoffset=5  --ystart=12.75 --ylineoffset=5.25 --xscale=0.4 --yscale=0.5 --safez=2 --depth=0.1 --xindentlist='1 2 3' 'Line0' 'Line1' 'Line2' 'Line3' > gcode.ngc" % sys.argv[0]
+    usage = "Usage:  %s [options] LINE1 LINE2 ... LINEN" % sys.argv[0]
+    example = """\
+Examples:
 
-    parser = optparse.OptionParser(epilog=example)
+%s --xstart=7.5 --xlineoffset=5  --ystart=12.75 --ylineoffset=5.25 --xscale=0.4 --yscale=0.5 --safez=2 --depth=0.1 --xindentlist='1 2 3' 'Line0' 'Line1' 'Line2' 'Line3' > gcode.ngc""" % sys.argv[0]
 
-    parser.add_option("--metric", dest="metric", help="Use metric units.", default=True)
-    parser.add_option("--font", dest="font", help="Font file (CXF) to use.")
+    parser = optparse.OptionParser(usage=usage, epilog=example)
+
+    parser.add_option("--inches", dest="metric", help="Use inch units.", default=False, action="store_false")
+    parser.add_option("--metric", dest="metric", help="Use metric units (default).", default=True, action="store_true")
+    parser.add_option("--font", dest="fontfile", help="Font file (CXF) to use.")
     parser.add_option("--xstart", dest="xstart", type='float', help="Start X Value.", default=0.0)
     parser.add_option("--xscale", dest="xscale", type='float', help="X scale.", default=1.0)
     parser.add_option("--xlineoffset", dest="xlineoffset", type='float', help="X offset between lines.", default=0.0)
@@ -423,8 +427,11 @@ def main():
 
     (options, stringlist) = parser.parse_args()
 
-    if not options.font:
+    if not options.fontfile:
         print 'Must specify a font.'
+
+    if not options.metric:
+        options.preamble = options.preamble.replace('G21', 'G20')
 
     for index, item in enumerate(stringlist):
         code(item,index, index == (len(stringlist) - 1), options)
