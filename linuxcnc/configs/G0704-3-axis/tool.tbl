@@ -1,0 +1,6 @@
+T1 P1 D0.125000 Z+0.0 ;1/8 end mill
+T2 P2 D0.062500 Z+0.0 ;1/16 end mill
+T3 P3 D0.201000 Z+0.0 ;#7 tap drill
+T4 P4 D201000 Z+0.0 ;2mm flat end mill (is this right?)
+T5 P5 D201000 Z+0.0 ;3/4" end mill
+T99999 P99999 Z+0.0 ;big tool number
