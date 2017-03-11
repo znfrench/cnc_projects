@@ -13,7 +13,7 @@
 #define IIR_DIV 8
 #define TRUNC 3
 #define MOTION SINGLE
-#define MAX_STEPS 10
+#define MAX_STEPS 100
 #define POT_INPUT A0
 
 
@@ -22,7 +22,9 @@
 // Create the motor shield object with the default I2C address
 static Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
-static Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); // M3 + M4 pins
+static Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 1); // M1 + M2 pins
+//static Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); // M3 + M4 pins
+
 
 static int32_t stepper_pos = 0;
 static bool first = true;
@@ -58,6 +60,22 @@ static void process_console(void) {
                 Serial.println("->");
                 myMotor->step(1, FORWARD, SINGLE);
                 break;
+            case 'B':
+                Serial.println("<-");
+                myMotor->step(16, BACKWARD, SINGLE);
+                break;
+            case 'F':
+                Serial.println("->");
+                myMotor->step(16, FORWARD, SINGLE);
+                break;
+            case 'L':
+                Serial.println("<-");
+                myMotor->step(200, BACKWARD, SINGLE);
+                break;
+            case 'P':
+                Serial.println("->");
+                myMotor->step(200, FORWARD, SINGLE);
+                break;
             case 'm':
                 Serial.println("<");
                 myMotor->step(1, BACKWARD, MICROSTEP);
@@ -65,6 +83,14 @@ static void process_console(void) {
             case 'n':
                 Serial.println(">");
                 myMotor->step(1, FORWARD, MICROSTEP);
+                break;
+            case 'M':
+                Serial.println("<");
+                myMotor->step(16, BACKWARD, MICROSTEP);
+                break;
+            case 'N':
+                Serial.println(">");
+                myMotor->step(16, FORWARD, MICROSTEP);
                 break;
             case 'u':
                 pause = false;
@@ -79,6 +105,9 @@ static void process_console(void) {
             default:
                 Serial.println("Usage:  b/f:  step (1.8 deg)");
                 Serial.println("        m/n:  microstep (1.8 deg)");
+                Serial.println("        B/F:  big step (30 deg)");
+                Serial.println("        M/N:  microstep (30 deg)");
+                Serial.println("        L/P:    step (360 deg)");
         }
     }
 }
