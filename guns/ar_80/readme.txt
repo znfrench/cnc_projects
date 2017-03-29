@@ -4,7 +4,7 @@ FCG MILLING
 Setup:  
 
 - X:  center of takedown hinge
-- Y:  left edge of receiver (rear portion)
+- Y:  center of receiver (rear portion)
 - Z:  top of receiver face
 
 Operations:
