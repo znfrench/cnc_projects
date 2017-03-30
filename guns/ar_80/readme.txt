@@ -1,3 +1,13 @@
+NOTES
+-----
+
+This works.  Be careful to locate the center carefully.
+
+1st attempt I used blue tape on lower to protect finish.  Some finish damage.
+2nd attempt I used duct tape on vise to protect lower.  Not enough grip.  Lost center and it tipped a bit during main operation.
+
+
+
 FCG MILLING
 -----------
 
