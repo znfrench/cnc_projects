@@ -27,3 +27,9 @@ SIDE HOLE DRILLING
 ------------------
 
 TBD
+
+
+NOTES
+-----
+
+The plunge in the rear pocket is way too fast!
