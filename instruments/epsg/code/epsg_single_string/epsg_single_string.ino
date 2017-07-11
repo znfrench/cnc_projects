@@ -43,8 +43,9 @@
 #define RKL     5
 #define RKL     6
 
-#define PEDAL_A_MIN 25
-#define PEDAL_A_MAX 325
+// TODO make these dynamic
+#define PEDAL_A_MIN 615
+#define PEDAL_A_MAX 750
 
 // - Types ---------------------------------------------------------------------
 
@@ -116,9 +117,10 @@ static void set_servo_pos(int servo, float deg) {
     if(deg > 90 || deg < -90) {
         return;
     }
-#if 1    
+#if 0    
     Serial.print("\ndeg = ");
     Serial.print(deg);
+    Serial.print("\n");
 #endif
     // TODO make this all fixed point later
     float pulse_ms = (float) deg/180 + SERVO_0_MS;
@@ -140,7 +142,7 @@ static void set_servo_pos(int servo, float deg) {
     Serial.print("\n");
 #endif
 
-#if 1
+#if 0
     Serial.print("servo ");
     Serial.print(servo);
     Serial.print(" pulse width ");
@@ -329,9 +331,14 @@ static void process_control(void) {
 
 static void process_inputs(int inputs[NUM_INPUTS]) {
     uint32_t value = analogRead(POT_INPUT);
-    //Serial.println("INPUT_0 = ");
-    //Serial.println(value);
-    //Serial.println("\n");
+
+    float pct = (float) (value - PEDAL_A_MIN)/(PEDAL_A_MAX - PEDAL_A_MIN);
+
+#if 0
+    Serial.println("INPUT_0 = ");
+    Serial.println(pct);
+    Serial.println("\n");
+#endif
 
     inputs[0] = value;
     inputs[1] = 0;
@@ -352,16 +359,28 @@ static void output_positions(int inputs[NUM_INPUTS]) {
       pct = 0.0;
     }
     
-    //Serial.println("pct ");
-    //Serial.println(pct);
-    float max_deg = +30;
-    float min_deg = -30;
+#if 1
+    Serial.print("input ");
+    Serial.print(inputs[0]);
+    Serial.print(" pct ");
+    Serial.print(pct);
+#endif
+//    float max_deg = +30;
+//    float min_deg = -30;
+    float max_deg = +90;
+    float min_deg = -45;
 
     // Convert percentage of input to a position.
     float deg = pct*(max_deg - min_deg) + min_deg;
 
+#if 1
+    Serial.print(" deg ");
+    Serial.print(deg);
+    Serial.print("\n");
+#endif
+
     // Output to servo.
-    set_servo_pos(0, deg);
+    set_servo_pos(14, deg);
 }
 
 
