@@ -44,8 +44,8 @@
 #define RKL     6
 
 // TODO make these dynamic
-#define PEDAL_A_MIN 615
-#define PEDAL_A_MAX 750
+#define PEDAL_A_MIN 250
+#define PEDAL_A_MAX 400
 
 // - Types ---------------------------------------------------------------------
 
@@ -367,7 +367,7 @@ static void output_positions(int inputs[NUM_INPUTS]) {
 #endif
 //    float max_deg = +30;
 //    float min_deg = -30;
-    float max_deg = +90;
+    float max_deg = +0;
     float min_deg = -45;
 
     // Convert percentage of input to a position.
